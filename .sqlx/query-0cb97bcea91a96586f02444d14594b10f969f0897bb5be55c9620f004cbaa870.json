@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT t.valor, t.tipo, t.descricao, t.realizada_em FROM transactions t WHERE t.user_id = $1 ORDER BY t.realizada_em DESC limit 10",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "valor",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "tipo",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "descricao",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "realizada_em",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "0cb97bcea91a96586f02444d14594b10f969f0897bb5be55c9620f004cbaa870"
+}
