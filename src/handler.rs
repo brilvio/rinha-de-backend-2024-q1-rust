@@ -73,6 +73,31 @@ pub async fn create_transaction_handler(
         (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
     })?;
 
+    // validate body
+    if body.tipo != "d" && body.tipo != "c" {
+        let error_response = serde_json::json!({
+            "status": "fail",
+            "message": "Tipo inválido",
+        });
+        return Err((StatusCode::UNPROCESSABLE_ENTITY, Json(error_response)));
+    }
+
+    if body.descricao == "" {
+        let error_response = serde_json::json!({
+            "status": "fail",
+            "message": "Descrição inválida",
+        });
+        return Err((StatusCode::UNPROCESSABLE_ENTITY, Json(error_response)));
+    }
+
+    if body.valor <= 0 {
+        let error_response = serde_json::json!({
+            "status": "fail",
+            "message": "Valor inválido",
+        });
+        return Err((StatusCode::UNPROCESSABLE_ENTITY, Json(error_response)));
+    }
+
     let query_result = sqlx::query!("SELECT saldo, limite FROM users WHERE id = $1", id)
         .fetch_one(&mut *tx)
         .await;
