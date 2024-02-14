@@ -3,7 +3,7 @@ mod model;
 mod route;
 mod schema;
 
-use std::{collections::HashMap, hash::Hash, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
@@ -14,7 +14,7 @@ use route::create_router;
 
 use tower_http::cors::CorsLayer;
 
-use sqlx::{postgres::PgPoolOptions, Executor, Pool, Postgres};
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 pub struct AppState {
     db: Pool<Postgres>,

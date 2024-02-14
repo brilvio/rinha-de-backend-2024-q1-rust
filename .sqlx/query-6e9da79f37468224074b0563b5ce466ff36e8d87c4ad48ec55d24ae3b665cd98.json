@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT coalesce(t.valor,0) as valor, coalesce(t.tipo,'x') as tipo, coalesce(t.descricao,'none') as descricao, t.realizada_em, u.saldo, u.limite FROM users u \n        LEFT JOIN transactions t ON \n        u.id = t.user_id \n        WHERE u.id = $1 \n        ORDER BY t.realizada_em DESC  \n        LIMIT 10",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "valor",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "tipo",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "descricao",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "realizada_em",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "saldo",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "limite",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "6e9da79f37468224074b0563b5ce466ff36e8d87c4ad48ec55d24ae3b665cd98"
+}

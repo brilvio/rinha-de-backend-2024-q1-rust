@@ -21,12 +21,12 @@ pub struct SaldoModel {
     pub data_extrato: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, FromRow, Deserialize, Serialize)]
+#[derive(Debug, FromRow, Deserialize, Serialize, Clone)]
 #[allow(non_snake_case)]
 pub struct TransactionModel {
-    pub valor: i64,
-    pub tipo: String,
-    pub descricao: String,
+    pub valor: Option<i64>,
+    pub tipo: Option<String>,
+    pub descricao: Option<String>,
     pub realizada_em: Option<chrono::DateTime<chrono::Utc>>,
 }
 
@@ -34,4 +34,14 @@ pub struct TransactionModel {
 pub struct TransactionsModel {
     pub saldo: SaldoModel,
     pub ultimas_transacoes: Vec<TransactionModel>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct TransactionSelectModel {
+    pub valor: Option<i64>,
+    pub tipo: Option<String>,
+    pub descricao: Option<String>,
+    pub realizada_em: Option<chrono::DateTime<chrono::Utc>>,
+    pub saldo: i64,
+    pub limite: i64,
 }

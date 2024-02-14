@@ -6,4 +6,7 @@ build-docker:
 	docker build -t $(DOCKER_IMAGE) .
 
 docker-run:
-	docker compose up -d && docker container stats
+	docker compose up
+
+bup:
+	docker-compose down && docker build -t $(DOCKER_IMAGE) . && docker compose up
