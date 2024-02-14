@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT saldo, limite FROM users WHERE id = $1 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "saldo",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "limite",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "833eb03aac9b49f49d578c41d48dd98a2b3fd9470302544c18f8e85fa483b96e"
+}

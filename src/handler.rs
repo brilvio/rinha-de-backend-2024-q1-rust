@@ -18,6 +18,7 @@ pub async fn get_cliente_handler(
     Path(id): Path<i32>,
     State(data): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    // let db = data.db.lock().await;
     let query_result = sqlx::query_as!(
         UserModel,
         "SELECT * FROM users where id = $1 ORDER by id",
@@ -43,6 +44,7 @@ pub async fn get_cliente_handler(
 pub async fn get_clientes_list_handler(
     State(data): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    //let db = data.db.lock().await;
     let query_result = sqlx::query_as!(UserModel, "SELECT * FROM users ORDER by id",)
         .fetch_all(&data.db)
         .await;
@@ -66,14 +68,9 @@ pub async fn create_transaction_handler(
     State(data): State<Arc<AppState>>,
     Json(body): Json<CreateTransactionSchema>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    let mut tx = data.db.begin().await.map_err(|e| {
-        let error_response = serde_json::json!({
-            "message": format!("Error starting transaction: {:?}", e),
-        });
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
-    })?;
-
     // validate body
+    //let db = data.db.lock().await;
+
     if body.tipo != "d" && body.tipo != "c" {
         let error_response = serde_json::json!({
             "status": "fail",
@@ -82,7 +79,23 @@ pub async fn create_transaction_handler(
         return Err((StatusCode::UNPROCESSABLE_ENTITY, Json(error_response)));
     }
 
+    if body.tipo == "d" && body.valor > data.limites[&id] {
+        let error_response = serde_json::json!({
+            "status": "fail",
+            "message": "Valor inválido",
+        });
+        return Err((StatusCode::UNPROCESSABLE_ENTITY, Json(error_response)));
+    }
+
     if body.descricao == "" {
+        let error_response = serde_json::json!({
+            "status": "fail",
+            "message": "Descrição inválida",
+        });
+        return Err((StatusCode::UNPROCESSABLE_ENTITY, Json(error_response)));
+    }
+
+    if body.descricao.len() > 10 {
         let error_response = serde_json::json!({
             "status": "fail",
             "message": "Descrição inválida",
@@ -98,9 +111,19 @@ pub async fn create_transaction_handler(
         return Err((StatusCode::UNPROCESSABLE_ENTITY, Json(error_response)));
     }
 
-    let query_result = sqlx::query!("SELECT saldo, limite FROM users WHERE id = $1", id)
-        .fetch_one(&mut *tx)
-        .await;
+    let mut tx = data.db.begin().await.map_err(|e| {
+        let error_response = serde_json::json!({
+            "message": format!("Error starting transaction: {:?}", e),
+        });
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+    })?;
+
+    let query_result = sqlx::query!(
+        "SELECT saldo, limite FROM users WHERE id = $1 FOR UPDATE",
+        id
+    )
+    .fetch_one(&mut *tx)
+    .await;
 
     if query_result.is_err() {
         let error_response = serde_json::json!({
@@ -159,6 +182,13 @@ pub async fn create_transaction_handler(
             return Ok((StatusCode::OK, Json(transaction_response)));
         }
         Err(e) => {
+            tx.rollback().await.map_err(|e| {
+                let error_response = serde_json::json!({
+                    "message": format!("Error rolling back transaction: {:?}", e),
+                });
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+            })?;
+            print!("{:?}", e);
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({"status": "error updating saldo","message": format!("{:?}", e)})),
@@ -171,6 +201,7 @@ pub async fn get_extrato_handler(
     Path(id): Path<i32>,
     State(data): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    //let db = data.db.lock().await;
     let query_result = sqlx::query!(
         "SELECT t.valor, t.tipo, t.descricao, t.realizada_em FROM transactions t WHERE t.user_id = $1 ORDER BY t.realizada_em DESC limit 10",
         id

@@ -3,7 +3,7 @@ mod model;
 mod route;
 mod schema;
 
-use std::sync::Arc;
+use std::{collections::HashMap, hash::Hash, sync::Arc};
 
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
@@ -11,12 +11,14 @@ use axum::http::{
 };
 use dotenv::dotenv;
 use route::create_router;
+
 use tower_http::cors::CorsLayer;
 
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::{postgres::PgPoolOptions, Executor, Pool, Postgres};
 
 pub struct AppState {
     db: Pool<Postgres>,
+    limites: HashMap<i32, i64>,
 }
 
 #[tokio::main]
@@ -25,6 +27,13 @@ async fn main() {
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = match PgPoolOptions::new()
+        // .after_connect(|conn, _| {
+        //     Box::pin(async move {
+        //         conn.execute("SET default_transaction_isolation TO 'REPEATABLE READ'")
+        //             .await?;
+        //         Ok(())
+        //     })
+        // })
         .max_connections(10)
         .connect(&database_url)
         .await
@@ -47,7 +56,21 @@ async fn main() {
         .allow_credentials(true)
         .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
 
-    let app = create_router(Arc::new(AppState { db: pool.clone() })).layer(cors);
+    let mut limites = HashMap::new();
+    let clients = sqlx::query!("SELECT * FROM users")
+        .fetch_all(&pool)
+        .await
+        .unwrap();
+
+    for cliente in clients {
+        limites.insert(cliente.id as i32, cliente.limite as i64);
+    }
+
+    let app = create_router(Arc::new(AppState {
+        db: pool.clone(),
+        limites,
+    }))
+    .layer(cors);
 
     println!("🚀 Server started successfully");
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
